@@ -26,7 +26,7 @@ st.markdown("""
     
     /* Gradient Hero Title */
     .hero-title {
-        font-size: 2.8rem;
+        font-size: 2.6rem;
         font-weight: 800;
         background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
         -webkit-background-clip: text;
@@ -34,24 +34,23 @@ st.markdown("""
         margin-bottom: 0.2rem;
     }
     .hero-subtitle {
-        font-size: 1.1rem;
+        font-size: 1.05rem;
         color: #94a3b8;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
     }
 
-    /* Glass Cards */
-    .glass-card {
-        background: rgba(30, 41, 59, 0.6);
+    /* Native Container Styling as Glass Cards */
+    [data-testid="stVerticalBlockBorderWrapper"] {
+        background: rgba(30, 41, 59, 0.55);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 16px !important;
+        padding: 0.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
     }
 
-    /* Custom Badges */
+    /* Custom Sentiment Badges */
     .badge-pos {
         background: rgba(16, 185, 129, 0.15);
         color: #34d399;
@@ -59,7 +58,17 @@ st.markdown("""
         padding: 8px 16px;
         border-radius: 8px;
         font-weight: 700;
-        font-size: 1.1rem;
+        font-size: 1.05rem;
+        display: inline-block;
+    }
+    .badge-neu {
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+        border: 1px solid #f59e0b;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 1.05rem;
         display: inline-block;
     }
     .badge-neg {
@@ -69,23 +78,24 @@ st.markdown("""
         padding: 8px 16px;
         border-radius: 8px;
         font-weight: 700;
-        font-size: 1.1rem;
+        font-size: 1.05rem;
         display: inline-block;
     }
 
-    /* Primary Button Styling */
+    /* Primary & Preset Button Styling */
     .stButton > button {
         background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%);
         color: white;
         border: none;
         border-radius: 10px;
-        padding: 0.6rem 1.2rem;
+        padding: 0.55rem 1rem;
         font-weight: 600;
-        transition: all 0.3s ease;
+        transition: all 0.25s ease;
     }
     .stButton > button:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        color: white;
     }
 
     /* Hide default Streamlit branding */
@@ -146,29 +156,28 @@ with tab1:
     col_left, col_right = st.columns([1.1, 1.2], gap="large")
     
     with col_left:
-        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        st.subheader("✍️ Input Customer Review")
-        
-        # Quick Demo Preset Buttons for Live Presentation
-        st.caption("⚡ Quick Test Presets (Click to auto-fill):")
-        p_col1, p_col2, p_col3 = st.columns(3)
-        if p_col1.button("😍 Positive Demo", use_container_width=True):
-            st.session_state.demo_text = "Absolutely amazing product! Super stylish build quality and the battery backup lasts forever."
-        if p_col2.button("😡 Negative Demo", use_container_width=True):
-            st.session_state.demo_text = "Terrible experience. Stopped working after two days and does not match the description shown online."
-        if p_col3.button("😐 Average Demo", use_container_width=True):
-            st.session_state.demo_text = "Product is okay for the price, build feels a bit plastic though delivery was fast."
+        with st.container(border=True):
+            st.subheader("✍️ Input Customer Review")
+            
+            # Quick Demo Preset Buttons for Live Presentation
+            st.caption("⚡ Quick Test Presets (Click to auto-fill):")
+            p_col1, p_col2, p_col3 = st.columns(3)
+            if p_col1.button("😍 Positive Demo", use_container_width=True):
+                st.session_state.demo_text = "Absolutely amazing product! Super stylish build quality and the battery backup lasts forever."
+            if p_col2.button("😡 Negative Demo", use_container_width=True):
+                st.session_state.demo_text = "Terrible experience. Stopped working after two days and does not match the description shown online."
+            if p_col3.button("😐 Average Demo", use_container_width=True):
+                st.session_state.demo_text = "Product is okay for the price, build feels a bit plastic though delivery was fast."
 
-        default_val = st.session_state.get("demo_text", "")
-        user_review = st.text_area(
-            "Enter or paste any product review below:",
-            value=default_val,
-            placeholder="Type a product review here...",
-            height=150
-        )
-        
-        analyze_clicked = st.button("🚀 Analyze Review Intelligence", use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+            default_val = st.session_state.get("demo_text", "")
+            user_review = st.text_area(
+                "Enter or paste any product review below:",
+                value=default_val,
+                placeholder="Type a product review here...",
+                height=150
+            )
+            
+            analyze_clicked = st.button("🚀 Analyze Review Intelligence", use_container_width=True)
 
     with col_right:
         if analyze_clicked or user_review.strip() != "":
@@ -184,60 +193,58 @@ with tab1:
                 confidence = max(pos_prob, 1 - pos_prob) * 100
                 
                 # Results Card
-                st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-                st.subheader("📊 Inference Results")
-                
-                res_c1, res_c2 = st.columns(2)
-                with res_c1:
-                    st.caption("SENTIMENT CLASSIFICATION")
-                    if predicted_rating >= 4:
-                        st.markdown('<div class="badge-pos">😊 POSITIVE SENTIMENT</div>', unsafe_allow_html=True)
-                    elif predicted_rating == 3:
-                        st.markdown('<div class="badge-pos" style="border-color:#f59e0b; color:#fbbf24; background:rgba(245,158,11,0.15);">😐 NEUTRAL / MIXED</div>', unsafe_allow_html=True)
-                    else:
-                        st.markdown('<div class="badge-neg">😡 NEGATIVE SENTIMENT</div>', unsafe_allow_html=True)
-                
-                with res_c2:
-                    st.caption("PREDICTED STAR RATING")
-                    stars_visual = "⭐" * predicted_rating + "☆" * (5 - predicted_rating)
-                    st.markdown(f"### {predicted_rating}.0 / 5.0  {stars_visual}")
-                
-                st.markdown("<br>", unsafe_allow_html=True)
-                st.caption(f"AI MODEL CONFIDENCE SCORE: **{confidence:.2f}%**")
-                st.progress(int(confidence))
-                st.markdown('</div>', unsafe_allow_html=True)
+                with st.container(border=True):
+                    st.subheader("📊 Inference Results")
+                    
+                    res_c1, res_c2 = st.columns(2)
+                    with res_c1:
+                        st.caption("SENTIMENT CLASSIFICATION")
+                        if predicted_rating >= 4:
+                            st.markdown('<div class="badge-pos">😊 POSITIVE SENTIMENT</div>', unsafe_allow_html=True)
+                        elif predicted_rating == 3:
+                            st.markdown('<div class="badge-neu">😐 NEUTRAL / MIXED</div>', unsafe_allow_html=True)
+                        else:
+                            st.markdown('<div class="badge-neg">😡 NEGATIVE SENTIMENT</div>', unsafe_allow_html=True)
+                    
+                    with res_c2:
+                        st.caption("PREDICTED STAR RATING")
+                        stars_visual = "⭐" * predicted_rating + "☆" * (5 - predicted_rating)
+                        st.markdown(f"### {predicted_rating}.0 / 5.0  {stars_visual}")
+                    
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    st.caption(f"AI MODEL CONFIDENCE SCORE: **{confidence:.2f}%**")
+                    st.progress(int(confidence))
                 
                 # Similar Reviews Card
-                st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-                st.subheader("🔎 Top Similar Historical Reviews")
-                similarities = cosine_similarity(vec, X_tfidf).flatten()
-                top_indices = similarities.argsort()[-3:][::-1]
-                
-                for rank, idx in enumerate(top_indices, 1):
-                    sim_score = similarities[idx] * 100
-                    rev_text = df.iloc[idx]['Review_Text']
-                    rev_rating = df.iloc[idx]['Rating']
-                    st.markdown(f"**#{rank} Match** • `{sim_score:.1f}% Similarity` • **Rating:** {'⭐'*rev_rating}")
-                    st.info(f'"{rev_text}"')
-                st.markdown('</div>', unsafe_allow_html=True)
+                with st.container(border=True):
+                    st.subheader("🔎 Top Similar Historical Reviews")
+                    similarities = cosine_similarity(vec, X_tfidf).flatten()
+                    top_indices = similarities.argsort()[-3:][::-1]
+                    
+                    for rank, idx in enumerate(top_indices, 1):
+                        sim_score = similarities[idx] * 100
+                        rev_text = df.iloc[idx]['Review_Text']
+                        rev_rating = df.iloc[idx]['Rating']
+                        st.markdown(f"**#{rank} Match** • `{sim_score:.1f}% Similarity` • **Rating:** {'⭐'*rev_rating}")
+                        st.info(f'"{rev_text}"')
         else:
-            st.markdown('<div class="glass-card" style="text-align:center; padding: 4rem 2rem;">', unsafe_allow_html=True)
-            st.markdown("### 👈 Waiting for Input")
-            st.caption("Enter a review on the left or click a **Quick Test Preset** to see live NLP sentiment, star predictions, and semantic matches.")
-            st.markdown('</div>', unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown("<div style='text-align:center; padding: 4.5rem 1.5rem;'>", unsafe_allow_html=True)
+                st.markdown("### 👈 Waiting for Input")
+                st.caption("Enter a review on the left or click a **Quick Test Preset** to see live NLP sentiment, star predictions, and semantic matches.")
+                st.markdown("</div>", unsafe_allow_html=True)
 
 with tab2:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.subheader("📊 Rating Distribution Across Dataset")
-    rating_counts = df['Rating'].value_counts().sort_index()
-    st.bar_chart(rating_counts, color="#6366f1")
-    
-    st.subheader("🏆 Model Performance Benchmarks")
-    bench_df = pd.DataFrame({
-        "Model Architecture": ["Multinomial Naive Bayes", "Logistic Regression (N-Gram)", "Random Forest Classifier"],
-        "Task": ["Binary Sentiment", "1–5 Star Rating", "Binary Sentiment"],
-        "Vectorizer": ["TF-IDF (1,2)", "TF-IDF (1,2)", "TF-IDF (1,2)"],
-        "Validation Score": ["96.5%", "98.2%", "97.8%"]
-    })
-    st.table(bench_df)
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.subheader("📊 Rating Distribution Across Dataset")
+        rating_counts = df['Rating'].value_counts().sort_index()
+        st.bar_chart(rating_counts, color="#6366f1")
+        
+        st.subheader("🏆 Model Performance Benchmarks")
+        bench_df = pd.DataFrame({
+            "Model Architecture": ["Multinomial Naive Bayes", "Logistic Regression (N-Gram)", "Random Forest Classifier"],
+            "Task": ["Binary Sentiment", "1–5 Star Rating", "Binary Sentiment"],
+            "Vectorizer": ["TF-IDF (1,2)", "TF-IDF (1,2)", "TF-IDF (1,2)"],
+            "Validation Score": ["96.5%", "98.2%", "97.8%"]
+        })
+        st.table(bench_df)
