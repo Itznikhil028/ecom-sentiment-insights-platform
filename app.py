@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import re
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
@@ -82,6 +84,19 @@ st.markdown("""
         display: inline-block;
     }
 
+    /* Signal Token Chips */
+    .token-chip {
+        display: inline-block;
+        background: rgba(99, 102, 241, 0.18);
+        border: 1px solid rgba(129, 140, 248, 0.45);
+        color: #e0e7ff;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin: 3px 4px 3px 0;
+    }
+
     /* Primary & Preset Button Styling */
     .stButton > button {
         background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%);
@@ -117,7 +132,7 @@ def load_pipeline():
     
     df['Cleaned_Review'] = df['Review_Text'].apply(clean_text)
     
-    vectorizer = TfidfVectorizer(max_features=3000, ngram_range=(1, 2))
+    vectorizer = TfidfVectorizer(max_features=3000, ngram_range=(1, 2), stop_words='english')
     X_tfidf = vectorizer.fit_transform(df['Cleaned_Review'])
     
     sentiment_model = MultinomialNB()
@@ -126,9 +141,35 @@ def load_pipeline():
     rating_model = LogisticRegression(max_iter=1000)
     rating_model.fit(X_tfidf, df['Rating'])
     
-    return df, vectorizer, X_tfidf, sentiment_model, rating_model, clean_text
+    feature_names = vectorizer.get_feature_names_out()
+    # Log-probability difference per feature between Positive (1) and Negative (0)
+    log_prob_diff = sentiment_model.feature_log_prob_[1] - sentiment_model.feature_log_prob_[0]
+    token_weight_map = dict(zip(feature_names, log_prob_diff))
+    
+    return df, vectorizer, X_tfidf, sentiment_model, rating_model, clean_text, token_weight_map
 
-df, vectorizer, X_tfidf, sentiment_model, rating_model, clean_text_func = load_pipeline()
+df, vectorizer, X_tfidf, sentiment_model, rating_model, clean_text_func, token_weight_map = load_pipeline()
+
+@st.cache_data
+def generate_wordcloud_img(text_corpus, colormap):
+    corpus_str = " ".join(text_corpus.dropna().astype(str))
+    if not corpus_str.strip():
+        corpus_str = "no reviews available"
+    wc = WordCloud(
+        width=700,
+        height=360,
+        background_color="#0f172a",
+        colormap=colormap,
+        max_words=80,
+        collocations=True
+    ).generate(corpus_str)
+    
+    fig, ax = plt.subplots(figsize=(7, 3.6))
+    fig.patch.set_facecolor("#0f172a")
+    ax.imshow(wc, interpolation="bilinear")
+    ax.axis("off")
+    plt.tight_layout(pad=0)
+    return fig
 
 # 4. Sidebar Architecture Info
 with st.sidebar:
@@ -150,7 +191,7 @@ st.markdown('<div class="hero-title">⚡ SentixAI: E-Commerce Review Intelligenc
 st.markdown('<div class="hero-subtitle">Real-time Sentiment Classification, 1–5 Star Rating Estimation & Semantic Review Matching</div>', unsafe_allow_html=True)
 
 # 6. Navigation Tabs
-tab1, tab2 = st.tabs(["🔍 Live AI Analyzer", "📈 Dataset & Model Benchmarks"])
+tab1, tab2 = st.tabs(["🔍 Live AI Analyzer", "📈 Dataset, Word Clouds & Benchmarks"])
 
 with tab1:
     col_left, col_right = st.columns([1.1, 1.2], gap="large")
@@ -214,6 +255,24 @@ with tab1:
                     st.markdown("<br>", unsafe_allow_html=True)
                     st.caption(f"AI MODEL CONFIDENCE SCORE: **{confidence:.2f}%**")
                     st.progress(int(confidence))
+
+                    # Explainable Key Signal Tokens
+                    active_tokens = vectorizer.inverse_transform(vec)[0]
+                    scored_tokens = [
+                        (tok, token_weight_map[tok])
+                        for tok in active_tokens
+                        if tok in token_weight_map
+                    ]
+                    if scored_tokens:
+                        scored_tokens.sort(key=lambda x: abs(x[1]), reverse=True)
+                        top_tokens = scored_tokens[:6]
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        st.caption("🧠 KEY SIGNAL TOKENS (MODEL EXPLAINABILITY)")
+                        chips_html = "".join([
+                            f'<span class="token-chip">{tok} ({"+" if weight >= 0 else ""}{weight:.2f})</span>'
+                            for tok, weight in top_tokens
+                        ])
+                        st.markdown(chips_html, unsafe_allow_html=True)
                 
                 # Similar Reviews Card
                 with st.container(border=True):
@@ -231,10 +290,29 @@ with tab1:
             with st.container(border=True):
                 st.markdown("<div style='text-align:center; padding: 4.5rem 1.5rem;'>", unsafe_allow_html=True)
                 st.markdown("### 👈 Waiting for Input")
-                st.caption("Enter a review on the left or click a **Quick Test Preset** to see live NLP sentiment, star predictions, and semantic matches.")
+                st.caption("Enter a review on the left or click a **Quick Test Preset** to see live NLP sentiment, star predictions, key tokens, and semantic matches.")
                 st.markdown("</div>", unsafe_allow_html=True)
 
 with tab2:
+    with st.container(border=True):
+        st.subheader("☁️ Positive vs. Negative Review Word Clouds")
+        wc_col1, wc_col2 = st.columns(2, gap="medium")
+        
+        pos_reviews = df[df['Rating'] >= 4]['Cleaned_Review']
+        neg_reviews = df[df['Rating'] <= 2]['Cleaned_Review']
+        
+        with wc_col1:
+            st.caption("POSITIVE REVIEWS (4–5 ⭐)")
+            fig_pos = generate_wordcloud_img(pos_reviews, "Greens")
+            st.pyplot(fig_pos, use_container_width=True)
+            plt.close(fig_pos)
+            
+        with wc_col2:
+            st.caption("NEGATIVE REVIEWS (1–2 ⭐)")
+            fig_neg = generate_wordcloud_img(neg_reviews, "Reds")
+            st.pyplot(fig_neg, use_container_width=True)
+            plt.close(fig_neg)
+
     with st.container(border=True):
         st.subheader("📊 Rating Distribution Across Dataset")
         rating_counts = df['Rating'].value_counts().sort_index()
