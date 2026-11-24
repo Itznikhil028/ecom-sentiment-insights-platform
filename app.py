@@ -12,7 +12,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 # 1. Page Configuration
 st.set_page_config(
     page_title="SentixAI • E-Commerce Intelligence",
-    page_icon="⚡",
+    page_icon="◆",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -60,7 +60,8 @@ st.markdown("""
         padding: 8px 16px;
         border-radius: 8px;
         font-weight: 700;
-        font-size: 1.05rem;
+        font-size: 1.0rem;
+        letter-spacing: 0.04em;
         display: inline-block;
     }
     .badge-neu {
@@ -70,7 +71,8 @@ st.markdown("""
         padding: 8px 16px;
         border-radius: 8px;
         font-weight: 700;
-        font-size: 1.05rem;
+        font-size: 1.0rem;
+        letter-spacing: 0.04em;
         display: inline-block;
     }
     .badge-neg {
@@ -80,7 +82,8 @@ st.markdown("""
         padding: 8px 16px;
         border-radius: 8px;
         font-weight: 700;
-        font-size: 1.05rem;
+        font-size: 1.0rem;
+        letter-spacing: 0.04em;
         display: inline-block;
     }
 
@@ -199,13 +202,13 @@ def predict_batch_reviews(review_series):
 
 # 4. Sidebar Architecture Info
 with st.sidebar:
-    st.markdown("## ⚡ SentixAI Engine")
+    st.markdown("## SentixAI Engine")
     st.caption("Enterprise NLP & Rating Analytics")
     st.markdown("---")
-    st.markdown("### 🧠 Active Models")
-    st.info("**Sentiment:** Multinomial Naive Bayes\n\n**Rating (1-5⭐):** Logistic Regression\n\n**Search:** Cosine Similarity")
+    st.markdown("### Active Models")
+    st.info("**Sentiment:** Multinomial Naive Bayes\n\n**Rating (1–5):** Logistic Regression\n\n**Search:** Cosine Similarity")
     st.markdown("---")
-    st.markdown("### 📊 Dataset Metrics")
+    st.markdown("### Dataset Metrics")
     col_s1, col_s2 = st.columns(2)
     col_s1.metric("Total Reviews", len(df))
     col_s2.metric("Features", "3,000")
@@ -213,14 +216,14 @@ with st.sidebar:
     st.caption("Built by Nikhil Tanwar • CSIT")
 
 # 5. Hero Header
-st.markdown('<div class="hero-title">⚡ SentixAI: E-Commerce Review Intelligence</div>', unsafe_allow_html=True)
+st.markdown('<div class="hero-title">SentixAI: E-Commerce Review Intelligence</div>', unsafe_allow_html=True)
 st.markdown('<div class="hero-subtitle">Real-time Sentiment Classification, 1–5 Star Rating Estimation & Semantic Review Matching</div>', unsafe_allow_html=True)
 
 # 6. Navigation Tabs
 tab1, tab2, tab3 = st.tabs([
-    "🔍 Live AI Analyzer",
-    "📦 Bulk CSV Analyzer",
-    "📈 Dataset, Word Clouds & Benchmarks"
+    "Live AI Analyzer",
+    "Bulk CSV Analyzer",
+    "Dataset, Word Clouds & Benchmarks"
 ])
 
 with tab1:
@@ -228,16 +231,16 @@ with tab1:
     
     with col_left:
         with st.container(border=True):
-            st.subheader("✍️ Input Customer Review")
+            st.subheader("Input Customer Review")
             
             # Quick Demo Preset Buttons for Live Presentation
-            st.caption("⚡ Quick Test Presets (Click to auto-fill):")
+            st.caption("Quick Test Presets (Click to auto-fill):")
             p_col1, p_col2, p_col3 = st.columns(3)
-            if p_col1.button("😍 Positive Demo", use_container_width=True):
+            if p_col1.button("Positive Sample", use_container_width=True):
                 st.session_state.demo_text = "Absolutely amazing product! Super stylish build quality and the battery backup lasts forever."
-            if p_col2.button("😡 Negative Demo", use_container_width=True):
+            if p_col2.button("Negative Sample", use_container_width=True):
                 st.session_state.demo_text = "Terrible experience. Stopped working after two days and does not match the description shown online."
-            if p_col3.button("😐 Average Demo", use_container_width=True):
+            if p_col3.button("Neutral Sample", use_container_width=True):
                 st.session_state.demo_text = "Product is okay for the price, build feels a bit plastic though delivery was fast."
 
             default_val = st.session_state.get("demo_text", "")
@@ -248,12 +251,12 @@ with tab1:
                 height=150
             )
             
-            analyze_clicked = st.button("🚀 Analyze Review Intelligence", use_container_width=True)
+            analyze_clicked = st.button("Run Intelligence Analysis", use_container_width=True)
 
     with col_right:
         if analyze_clicked or user_review.strip() != "":
             if user_review.strip() == "":
-                st.warning("⚠️ Please enter a review or click one of the Quick Test Presets.")
+                st.warning("Please enter a review or click one of the Quick Test Presets.")
             else:
                 cleaned = clean_text_func(user_review)
                 vec = vectorizer.transform([cleaned])
@@ -265,22 +268,22 @@ with tab1:
                 
                 # Results Card
                 with st.container(border=True):
-                    st.subheader("📊 Inference Results")
+                    st.subheader("Inference Results")
                     
                     res_c1, res_c2 = st.columns(2)
                     with res_c1:
                         st.caption("SENTIMENT CLASSIFICATION")
                         if predicted_rating >= 4:
-                            st.markdown('<div class="badge-pos">😊 POSITIVE SENTIMENT</div>', unsafe_allow_html=True)
+                            st.markdown('<div class="badge-pos">POSITIVE SENTIMENT</div>', unsafe_allow_html=True)
                         elif predicted_rating == 3:
-                            st.markdown('<div class="badge-neu">😐 NEUTRAL / MIXED</div>', unsafe_allow_html=True)
+                            st.markdown('<div class="badge-neu">NEUTRAL / MIXED</div>', unsafe_allow_html=True)
                         else:
-                            st.markdown('<div class="badge-neg">😡 NEGATIVE SENTIMENT</div>', unsafe_allow_html=True)
+                            st.markdown('<div class="badge-neg">NEGATIVE SENTIMENT</div>', unsafe_allow_html=True)
                     
                     with res_c2:
-                        st.caption("PREDICTED STAR RATING")
-                        stars_visual = "⭐" * predicted_rating + "☆" * (5 - predicted_rating)
-                        st.markdown(f"### {predicted_rating}.0 / 5.0  {stars_visual}")
+                        st.caption("PREDICTED RATING")
+                        rating_bar = "★" * predicted_rating + "☆" * (5 - predicted_rating)
+                        st.markdown(f"### {predicted_rating}.0 / 5.0  `{rating_bar}`")
                     
                     st.markdown("<br>", unsafe_allow_html=True)
                     st.caption(f"AI MODEL CONFIDENCE SCORE: **{confidence:.2f}%**")
@@ -297,7 +300,7 @@ with tab1:
                         scored_tokens.sort(key=lambda x: abs(x[1]), reverse=True)
                         top_tokens = scored_tokens[:6]
                         st.markdown("<br>", unsafe_allow_html=True)
-                        st.caption("🧠 KEY SIGNAL TOKENS (MODEL EXPLAINABILITY)")
+                        st.caption("KEY SIGNAL TOKENS (MODEL EXPLAINABILITY)")
                         chips_html = "".join([
                             f'<span class="token-chip">{tok} ({"+" if weight >= 0 else ""}{weight:.2f})</span>'
                             for tok, weight in top_tokens
@@ -306,31 +309,30 @@ with tab1:
                 
                 # Similar Reviews Card
                 with st.container(border=True):
-                    st.subheader("🔎 Top Similar Historical Reviews")
+                    st.subheader("Top Similar Historical Reviews")
                     similarities = cosine_similarity(vec, X_tfidf).flatten()
                     top_indices = similarities.argsort()[-3:][::-1]
                     
                     for rank, idx in enumerate(top_indices, 1):
                         sim_score = similarities[idx] * 100
                         rev_text = df.iloc[idx]['Review_Text']
-                        rev_rating = df.iloc[idx]['Rating']
-                        st.markdown(f"**#{rank} Match** • `{sim_score:.1f}% Similarity` • **Rating:** {'⭐'*rev_rating}")
+                        rev_rating = int(df.iloc[idx]['Rating'])
+                        st.markdown(f"**#{rank} Match** • `{sim_score:.1f}% Similarity` • **Rating:** `{rev_rating}/5`")
                         st.info(f'"{rev_text}"')
         else:
             with st.container(border=True):
                 st.markdown("<div style='text-align:center; padding: 4.5rem 1.5rem;'>", unsafe_allow_html=True)
-                st.markdown("### 👈 Waiting for Input")
-                st.caption("Enter a review on the left or click a **Quick Test Preset** to see live NLP sentiment, star predictions, key tokens, and semantic matches.")
+                st.markdown("### Awaiting Review Input")
+                st.caption("Enter a review on the left or click a **Quick Test Preset** to inspect live NLP sentiment, rating predictions, key tokens, and semantic matches.")
                 st.markdown("</div>", unsafe_allow_html=True)
 
 with tab2:
     with st.container(border=True):
-        st.subheader("📦 Batch CSV Review Analyzer")
+        st.subheader("Batch CSV Review Analyzer")
         st.caption("Upload a `.csv` file containing customer reviews to run batch sentiment classification and 1–5 star rating prediction in one go.")
         
         uploaded_file = st.file_uploader("Upload CSV File", type=["csv"])
         
-        # Provide a quick sample CSV template download
         sample_csv = pd.DataFrame({
             "Review_Text": [
                 "Awesome sound quality and super fast delivery!",
@@ -340,7 +342,7 @@ with tab2:
         }).to_csv(index=False).encode("utf-8")
         
         st.download_button(
-            label="📄 Download Sample CSV Format",
+            label="Download Sample CSV Format",
             data=sample_csv,
             file_name="sample_reviews.csv",
             mime="text/csv"
@@ -350,7 +352,7 @@ with tab2:
             try:
                 batch_df = pd.read_csv(uploaded_file)
                 if batch_df.empty:
-                    st.error("❌ The uploaded CSV file is empty.")
+                    st.error("The uploaded CSV file is empty.")
                 else:
                     text_cols = [col for col in batch_df.columns if batch_df[col].dtype == object or "review" in col.lower() or "text" in col.lower()]
                     target_col = st.selectbox(
@@ -358,7 +360,7 @@ with tab2:
                         options=text_cols if text_cols else list(batch_df.columns)
                     )
                     
-                    if st.button("⚡ Run Batch Analysis", use_container_width=True):
+                    if st.button("Run Batch Analysis", use_container_width=True):
                         results_df = predict_batch_reviews(batch_df[target_col])
                         
                         m1, m2, m3, m4 = st.columns(4)
@@ -369,48 +371,48 @@ with tab2:
                         m1.metric("Total Analyzed", len(results_df))
                         m2.metric("Positive Reviews", pos_count)
                         m3.metric("Negative Reviews", neg_count)
-                        m4.metric("Avg Predicted Rating", f"{avg_stars:.2f} ⭐")
+                        m4.metric("Avg Predicted Rating", f"{avg_stars:.2f} / 5")
                         
                         st.markdown("<br>", unsafe_allow_html=True)
                         st.dataframe(results_df, use_container_width=True, hide_index=True)
                         
                         csv_export = results_df.to_csv(index=False).encode("utf-8")
                         st.download_button(
-                            label="⬇️ Download Analyzed Results (CSV)",
+                            label="Download Analyzed Results (CSV)",
                             data=csv_export,
                             file_name="analyzed_reviews_output.csv",
                             mime="text/csv",
                             use_container_width=True
                         )
             except Exception as e:
-                st.error(f"❌ Could not process CSV file: {e}")
+                st.error(f"Could not process CSV file: {e}")
 
 with tab3:
     with st.container(border=True):
-        st.subheader("☁️ Positive vs. Negative Review Word Clouds")
+        st.subheader("Positive vs. Negative Review Word Clouds")
         wc_col1, wc_col2 = st.columns(2, gap="medium")
         
         pos_reviews = df[df['Rating'] >= 4]['Cleaned_Review']
         neg_reviews = df[df['Rating'] <= 2]['Cleaned_Review']
         
         with wc_col1:
-            st.caption("POSITIVE REVIEWS (4–5 ⭐)")
+            st.caption("POSITIVE REVIEWS (4–5 Rating)")
             fig_pos = generate_wordcloud_img(pos_reviews, "Greens")
             st.pyplot(fig_pos, use_container_width=True)
             plt.close(fig_pos)
             
         with wc_col2:
-            st.caption("NEGATIVE REVIEWS (1–2 ⭐)")
+            st.caption("NEGATIVE REVIEWS (1–2 Rating)")
             fig_neg = generate_wordcloud_img(neg_reviews, "Reds")
             st.pyplot(fig_neg, use_container_width=True)
             plt.close(fig_neg)
 
     with st.container(border=True):
-        st.subheader("📊 Rating Distribution Across Dataset")
+        st.subheader("Rating Distribution Across Dataset")
         rating_counts = df['Rating'].value_counts().sort_index()
         st.bar_chart(rating_counts, color="#6366f1")
         
-        st.subheader("🏆 Model Performance Benchmarks")
+        st.subheader("Model Performance Benchmarks")
         bench_df = pd.DataFrame({
             "Model Architecture": ["Multinomial Naive Bayes", "Logistic Regression (N-Gram)", "Random Forest Classifier"],
             "Task": ["Binary Sentiment", "1–5 Star Rating", "Binary Sentiment"],
