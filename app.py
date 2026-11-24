@@ -142,7 +142,6 @@ def load_pipeline():
     rating_model.fit(X_tfidf, df['Rating'])
     
     feature_names = vectorizer.get_feature_names_out()
-    # Log-probability difference per feature between Positive (1) and Negative (0)
     log_prob_diff = sentiment_model.feature_log_prob_[1] - sentiment_model.feature_log_prob_[0]
     token_weight_map = dict(zip(feature_names, log_prob_diff))
     
@@ -171,6 +170,33 @@ def generate_wordcloud_img(text_corpus, colormap):
     plt.tight_layout(pad=0)
     return fig
 
+def predict_batch_reviews(review_series):
+    cleaned_series = review_series.fillna("").astype(str).apply(clean_text_func)
+    vec_matrix = vectorizer.transform(cleaned_series)
+    
+    probs = sentiment_model.predict_proba(vec_matrix)
+    pos_probs = probs[:, 1]
+    confidences = np.max(probs, axis=1) * 100
+    predicted_ratings = rating_model.predict(vec_matrix).astype(int)
+    
+    sentiments = []
+    for rating in predicted_ratings:
+        if rating >= 4:
+            sentiments.append("Positive")
+        elif rating == 3:
+            sentiments.append("Neutral")
+        else:
+            sentiments.append("Negative")
+            
+    result_df = pd.DataFrame({
+        "Review_Text": review_series.fillna("").astype(str),
+        "Predicted_Sentiment": sentiments,
+        "Predicted_Rating": predicted_ratings,
+        "Confidence_Score (%)": np.round(confidences, 2),
+        "Positive_Prob (%)": np.round(pos_probs * 100, 2)
+    })
+    return result_df
+
 # 4. Sidebar Architecture Info
 with st.sidebar:
     st.markdown("## ⚡ SentixAI Engine")
@@ -191,7 +217,11 @@ st.markdown('<div class="hero-title">⚡ SentixAI: E-Commerce Review Intelligenc
 st.markdown('<div class="hero-subtitle">Real-time Sentiment Classification, 1–5 Star Rating Estimation & Semantic Review Matching</div>', unsafe_allow_html=True)
 
 # 6. Navigation Tabs
-tab1, tab2 = st.tabs(["🔍 Live AI Analyzer", "📈 Dataset, Word Clouds & Benchmarks"])
+tab1, tab2, tab3 = st.tabs([
+    "🔍 Live AI Analyzer",
+    "📦 Bulk CSV Analyzer",
+    "📈 Dataset, Word Clouds & Benchmarks"
+])
 
 with tab1:
     col_left, col_right = st.columns([1.1, 1.2], gap="large")
@@ -294,6 +324,68 @@ with tab1:
                 st.markdown("</div>", unsafe_allow_html=True)
 
 with tab2:
+    with st.container(border=True):
+        st.subheader("📦 Batch CSV Review Analyzer")
+        st.caption("Upload a `.csv` file containing customer reviews to run batch sentiment classification and 1–5 star rating prediction in one go.")
+        
+        uploaded_file = st.file_uploader("Upload CSV File", type=["csv"])
+        
+        # Provide a quick sample CSV template download
+        sample_csv = pd.DataFrame({
+            "Review_Text": [
+                "Awesome sound quality and super fast delivery!",
+                "Worst purchase ever, broke within 24 hours.",
+                "Decent product for the price, nothing extraordinary."
+            ]
+        }).to_csv(index=False).encode("utf-8")
+        
+        st.download_button(
+            label="📄 Download Sample CSV Format",
+            data=sample_csv,
+            file_name="sample_reviews.csv",
+            mime="text/csv"
+        )
+
+        if uploaded_file is not None:
+            try:
+                batch_df = pd.read_csv(uploaded_file)
+                if batch_df.empty:
+                    st.error("❌ The uploaded CSV file is empty.")
+                else:
+                    text_cols = [col for col in batch_df.columns if batch_df[col].dtype == object or "review" in col.lower() or "text" in col.lower()]
+                    target_col = st.selectbox(
+                        "Select the column containing review text:",
+                        options=text_cols if text_cols else list(batch_df.columns)
+                    )
+                    
+                    if st.button("⚡ Run Batch Analysis", use_container_width=True):
+                        results_df = predict_batch_reviews(batch_df[target_col])
+                        
+                        m1, m2, m3, m4 = st.columns(4)
+                        pos_count = (results_df["Predicted_Sentiment"] == "Positive").sum()
+                        neg_count = (results_df["Predicted_Sentiment"] == "Negative").sum()
+                        avg_stars = results_df["Predicted_Rating"].mean()
+                        
+                        m1.metric("Total Analyzed", len(results_df))
+                        m2.metric("Positive Reviews", pos_count)
+                        m3.metric("Negative Reviews", neg_count)
+                        m4.metric("Avg Predicted Rating", f"{avg_stars:.2f} ⭐")
+                        
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        st.dataframe(results_df, use_container_width=True, hide_index=True)
+                        
+                        csv_export = results_df.to_csv(index=False).encode("utf-8")
+                        st.download_button(
+                            label="⬇️ Download Analyzed Results (CSV)",
+                            data=csv_export,
+                            file_name="analyzed_reviews_output.csv",
+                            mime="text/csv",
+                            use_container_width=True
+                        )
+            except Exception as e:
+                st.error(f"❌ Could not process CSV file: {e}")
+
+with tab3:
     with st.container(border=True):
         st.subheader("☁️ Positive vs. Negative Review Word Clouds")
         wc_col1, wc_col2 = st.columns(2, gap="medium")
